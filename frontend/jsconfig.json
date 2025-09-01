@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src", // faz os imports ficarem mais simples, ex: import X from "components/X"
+    "paths": {
+      "@/*": ["*"] // habilita o alias "@/..." para acessar qualquer arquivo dentro de src
+    }
+  },
+  "include": ["src"] // inclui toda a pasta src no projeto
+}
