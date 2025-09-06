@@ -4,33 +4,44 @@ from collections import defaultdict
 import numpy as np
 from .db import get_client
 
-def fetch_questions() -> List[dict]:
-    sb = get_client()
-    try:
-        res = sb.table("questions").select("id, question, level_a, level_b, level_c").execute()
-        return res.data or []
-    except Exception as e:
-        print(f"Erro ao buscar questões: {e}")
-        raise
+# retorna params por ID (dict) para montarmos o array alinhado depois
+def fetch_questions():
+    from .db import supabase
+    resp = supabase.table("questions").select(
+        "id, question, level_a, level_b, level_c"
+    ).execute()
+    if getattr(resp, "error", None):
+        raise RuntimeError(f"fetch_questions -> {resp.error}")
+    rows = resp.data
 
-def fetch_alternatives(page_size: int = 2000) -> List[dict]:
-    sb = get_client()
-    all_rows: List[dict] = []
-    page = 0
-    while True:
-        start = page * page_size
-        end = start + page_size - 1
-        res = sb.table("alternatives")\
-            .select("question_id, answer, option, correct")\
-            .range(start, end)\
-            .order("option")\
-            .execute()
-        rows = res.data or []
-        all_rows.extend(rows)
-        if len(rows) < page_size:
-            break
-        page += 1
-    return all_rows
+    questions = []
+    params_by_id = {}
+    for r in rows:
+        qid = r["id"]
+        a = r.get("level_a", 1.0)
+        b = r.get("level_b", 0.0)
+        c = r.get("level_c", 0.25)
+        questions.append({"id": qid, "stem": r["question"]})
+        params_by_id[qid] = (a, b, c)
+    return questions, params_by_id
+
+def fetch_alternatives():
+    from .db import supabase
+    resp = supabase.table("alternatives").select(
+        "id, question_id, option_key, option_text, correct"
+    ).execute()
+    if getattr(resp, "error", None):
+        raise RuntimeError(f"fetch_alternatives -> {resp.error}")
+    rows = resp.data
+
+    by_qid = {}
+    for r in rows:
+        qid = r["question_id"]
+        pack = by_qid.setdefault(qid, {"options": {}, "correct": None})
+        pack["options"][r["option_key"]] = r["option_text"]
+        if r.get("correct"):
+            pack["correct"] = r["option_key"]
+    return by_qid
 
 def build_item_bank(
     questions: List[dict],

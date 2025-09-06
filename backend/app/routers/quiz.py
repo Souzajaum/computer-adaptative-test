@@ -1,5 +1,6 @@
 # app/routers/quiz.py
 from fastapi import APIRouter, HTTPException, Body
+from loguru import logger
 from app.cat import init_cat, get_next_question, submit_answer
 from app.data_access import fetch_questions, fetch_alternatives
 
@@ -7,20 +8,40 @@ router = APIRouter()
 
 # 🔹 Iniciar um novo quiz
 @router.post("/start-quiz")
-async def start_quiz(user_id: str = Body(..., embed=True)):
+async def start_quiz(payload: dict):
+    # aceita várias chaves comuns
+    user_id = payload.get("user_id") or payload.get("userId") or payload.get("uid")
     if not user_id:
-        raise HTTPException(status_code=422, detail="user_id é obrigatório")
+        raise HTTPException(400, "Campo 'user_id' é obrigatório no corpo da requisição.")
+
     try:
         # Busca todas as questões e alternativas do banco de dados
-        questions_data = fetch_questions()
+        questions_data, params_by_id = fetch_questions()
         alternatives_data = fetch_alternatives()
 
+        ready = []
+        for q in questions_data:
+            pack = alternatives_data.get(q["id"])
+            if not pack or not pack["options"] or not pack["correct"]:
+                logger.warning(f"Questão {q['id']} sem alternativas/correta — ignorando.")
+                continue
+            q["options"] = pack["options"]
+            q["correct"] = pack["correct"]
+            ready.append(q)
+
+        if not ready:
+            raise RuntimeError("Nenhuma questão válida encontrada. Verifique alternativas e a flag 'correct'.")
+
+        # **alinha** os parâmetros com a ordem do array `ready`
+        ready_params = [params_by_id[q["id"]] for q in ready]
+
         # Inicializa a sessão do CAT com o banco de itens completo
-        init_cat(user_id, questions_data, alternatives_data)
+        init_cat(user_id, ready, ready_params)
         
-        return {"message": "Quiz iniciado com sucesso."}
+        return {"ok": True, "question": get_next_question(user_id)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao iniciar o quiz: {str(e)}")
+        logger.exception("Falha em /start-quiz")
+        raise HTTPException(500, f"start-quiz falhou: {e}")
 
 
 # 🔹 Buscar próxima questão adaptativa
