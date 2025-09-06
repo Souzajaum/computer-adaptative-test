@@ -1,32 +1,46 @@
 # app/routers/quiz.py
-from fastapi import APIRouter, HTTPException
-from app.db import get_client
+from fastapi import APIRouter, HTTPException, Body
 from app.cat import init_cat, get_next_question, submit_answer
 from app.data_access import fetch_questions, fetch_alternatives
 
 router = APIRouter()
 
-# 🔹 Buscar próxima questão adaptativa
-@router.get("/next-question")
-async def next_question(user_id: str):
-    client = get_client()
-
+# 🔹 Iniciar um novo quiz
+@router.post("/start-quiz")
+async def start_quiz(user_id: str = Body(..., embed=True)):
+    if not user_id:
+        raise HTTPException(status_code=422, detail="user_id é obrigatório")
     try:
-        # 1️⃣ Busca todas as questões e alternativas
+        # Busca todas as questões e alternativas do banco de dados
         questions_data = fetch_questions()
         alternatives_data = fetch_alternatives()
 
-        # 2️⃣ Inicializa sessão adaptativa
-        session = init_cat(user_id, questions_data, alternatives_data)
+        # Inicializa a sessão do CAT com o banco de itens completo
+        init_cat(user_id, questions_data, alternatives_data)
+        
+        return {"message": "Quiz iniciado com sucesso."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao iniciar o quiz: {str(e)}")
 
-        # 3️⃣ Pega próxima questão
+
+# 🔹 Buscar próxima questão adaptativa
+@router.get("/next-question")
+async def next_question(user_id: str):
+    try:
         question = get_next_question(user_id)
+        
+        # Se não houver mais questões, sinaliza o fim do teste
         if not question:
-            # Fim do teste
-            return {"message": "Teste concluído", "theta": session["theta"]}
+            # A sessão é mantida em memória, então podemos pegar o theta final
+            from app.cat import user_sessions
+            session = user_sessions.get(user_id, {})
+            return {"finished": True, "theta": session.get("theta", 0.0)}
 
-        return question
+        return {"question": question}
 
+    except RuntimeError as e:
+        # Captura o erro se a sessão não for encontrada
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
