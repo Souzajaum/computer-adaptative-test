@@ -6,8 +6,12 @@ from .db import get_client
 
 def fetch_questions() -> List[dict]:
     sb = get_client()
-    res = sb.table("questions").select("id, question, level_a, level_b, level_c").execute()
-    return res.data or []
+    try:
+        res = sb.table("questions").select("id, question, level_a, level_b, level_c").execute()
+        return res.data or []
+    except Exception as e:
+        print(f"Erro ao buscar questões: {e}")
+        raise
 
 def fetch_alternatives(page_size: int = 2000) -> List[dict]:
     sb = get_client()

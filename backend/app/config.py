@@ -11,6 +11,7 @@ load_dotenv()
 class Settings:
     supabase_url: str
     supabase_key: str
+    service_role_key: str | None
     initial_theta: float
     max_questions: int
     grid_min: float
@@ -21,11 +22,13 @@ class Settings:
 def get_settings() -> Settings:
     url = os.getenv("SUPABASE_URL", "").strip()
     key = os.getenv("SUPABASE_ANON_KEY", "").strip()
+    service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip() or None
     if not url or not key:
         raise RuntimeError("Defina SUPABASE_URL e SUPABASE_ANON_KEY no .env")
     return Settings(
         supabase_url=url,
         supabase_key=key,
+        service_role_key=service_role_key,
         initial_theta=float(os.getenv("INITIAL_THETA", 0.0)),
         max_questions=int(os.getenv("MAX_QUESTIONS", 10)),
         grid_min=float(os.getenv("GRID_MIN", -4.0)),
