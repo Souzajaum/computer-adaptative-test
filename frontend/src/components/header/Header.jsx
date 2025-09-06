@@ -36,40 +36,35 @@ const useSyncProfile = () => {
   }, []);
 };
 
-const Header = () => {
+const Header = ({ user }) => {
   useSyncProfile();
   const [modalOpen, setModalOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [signupOpen, setSignupOpen] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const currentUser = session?.user;
-      setUser(currentUser);
-
-      if (currentUser) {
+    const fetchProfile = async () => {
+      if (user) {
         const { data: profileData } = await supabase
           .from("user_profiles")
           .select("full_name")
-          .eq("id", currentUser.id)
+          .eq("id", user.id)
           .single();
         setProfile(profileData);
+      } else {
+        setProfile(null);
       }
     };
 
-    fetchUser();
+    fetchProfile();
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      fetchUser();
+      fetchProfile();
     });
 
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

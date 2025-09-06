@@ -25,7 +25,7 @@ const App = () => {
     <div className="flex flex-col min-h-screen">
       {/* Header fixo no topo */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Header />
+        <Header user={user} />
       </div>
 
       {/* Espaço para compensar o Header fixo */}

@@ -26,26 +26,31 @@ def init_cat(user_id: str, questions_data: List[dict], alternatives_data: List[d
     for q in questions_data:
         qid = q["id"]
         alts = alts_by_qid.get(qid, [])
-        opts_map = {a["option"]: a["answer"] for a in alts}
-        correct_alt = next((a for a in alts if a.get("correct")), None)
-        
+
+        # Normaliza parâmetros
+        a = q.get('a', q.get('level_a', 1.0))
+        b = q.get('b', q.get('level_b', 0.0))
+        c = q.get('c', q.get('level_c', 0.25))
+        item_params.append((a, b, c))
+
+        # Normaliza alternativas
+        opts_map = {alt["option_key"]: alt["option_text"] for alt in alts}
+        correct_alt = next((alt["option_key"] for alt in alts if alt.get("correct")), None)
+
         if opts_map and correct_alt:
             questions.append({
                 "id": qid,
                 "stem": q["question"],
                 "options": opts_map,
-                "correct": correct_alt["option"]
+                "correct": correct_alt
             })
-            # Adiciona os parâmetros do item (a, b, c)
-            item_params.append((q.get('a', 1.0), q.get('b', 0.0), q.get('c', 0.25)))
-
 
     # Embaralha as questões e os parâmetros de forma consistente
     if questions:
         combined = list(zip(questions, item_params))
         random.shuffle(combined)
         shuffled_questions, shuffled_item_params = zip(*combined)
-        
+
         questions = list(shuffled_questions)[:MAX_QUESTIONS_PER_USER]
         item_params = list(shuffled_item_params)[:MAX_QUESTIONS_PER_USER]
     else:
