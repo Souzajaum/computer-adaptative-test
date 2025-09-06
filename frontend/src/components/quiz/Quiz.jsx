@@ -54,27 +54,54 @@ const Quiz = () => {
     }
   }, [userId, theta]);
 
-  // 🔹 Inicialização e login
+  // 🔹 Inicialização e início do quiz
   useEffect(() => {
-    const init = async () => {
-      const session = await supabase.auth.getSession();
-      let user = session?.data?.session?.user;
+    const initAndStartQuiz = async () => {
+      setLoading(true);
+      try {
+        const session = await supabase.auth.getSession();
+        const user = session?.data?.session?.user;
 
-      if (!user) {
-        const login = await loginAnon();
-        setUserId(login?.user?.id || login); // loginAnon retorna objeto
-      } else {
-        setUserId(user.id);
+        if (user) {
+          const currentUserId = user.id;
+          setUserId(currentUserId);
+
+          // 1. Inicia a sessão no backend
+          await axios.post(
+            `${API_URL}/start-quiz`,
+            { user_id: currentUserId },
+            { headers: { "Content-Type": "application/json" } }
+          );
+
+          // 2. Busca a primeira questão
+          const res = await axios.get(`${API_URL}/next-question`, {
+            params: { user_id: currentUserId },
+          });
+
+          if (res.data.finished) {
+            setIsFinished(true);
+            setQuestion(null);
+            setTheta(res.data.theta || 0.0);
+          } else if (res.data.question) {
+            setQuestion(res.data.question);
+            setTheta(res.data.theta || 0.0);
+            setAnswer("");
+            setIsFinished(false); // Garante que não está finalizado
+          } else {
+            setQuestion(null);
+          }
+        }
+        // Se não houver usuário, não faz nada (ou pode redirecionar para o login)
+      } catch (err) {
+        console.error("Erro ao iniciar o quiz:", err);
+        setQuestion(null);
+      } finally {
+        setLoading(false);
       }
     };
 
-    init();
-  }, []);
-
-  // 🔹 Busca primeira questão quando userId definido
-  useEffect(() => {
-    if (userId) fetchQuestion();
-  }, [userId, fetchQuestion]);
+    initAndStartQuiz();
+  }, []); // Executa apenas uma vez na montagem do componente
 
   const handleSelect = (option) => setAnswer(option);
 
