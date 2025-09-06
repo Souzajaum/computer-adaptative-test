@@ -7,36 +7,29 @@ const App = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-
-      supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
-      });
-    };
-
-    getSession();
+    // pega sessão atual
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+    // atualiza ao logar/sair
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header fixo no topo */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Header user={user} />
+        <Header user={user} setUser={setUser} />
       </div>
 
       {/* Espaço para compensar o Header fixo */}
       <div className="pt-[80px] px-4 flex-1">
-        {user ? (
-          <Quiz />
-        ) : (
-          <p className="text-center text-gray-600 text-lg mt-10">
-            Você precisa estar logado para acessar o quiz.
-          </p>
-        )}
+        <Quiz user={user} />
       </div>
     </div>
   );

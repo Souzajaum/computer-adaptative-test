@@ -28,19 +28,19 @@ def fetch_questions():
 def fetch_alternatives():
     from .db import supabase
     resp = supabase.table("alternatives").select(
-        "id, question_id, option_key, option_text, correct"
+        "id, question_id, option, answer, correct"
     ).execute()
-    if getattr(resp, "error", None):
-        raise RuntimeError(f"fetch_alternatives -> {resp.error}")
-    rows = resp.data
+    rows = _check(resp, "fetch_alternatives")
 
     by_qid = {}
     for r in rows:
         qid = r["question_id"]
         pack = by_qid.setdefault(qid, {"options": {}, "correct": None})
-        pack["options"][r["option_key"]] = r["option_text"]
+        # option -> chave ('A', 'B'...)
+        # answer -> texto
+        pack["options"][r["option"]] = r["answer"]
         if r.get("correct"):
-            pack["correct"] = r["option_key"]
+            pack["correct"] = r["option"]
     return by_qid
 
 def build_item_bank(
