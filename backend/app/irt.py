@@ -14,6 +14,17 @@ def _sigmoid_stable(x: np.ndarray) -> np.ndarray:
 def p3pl(a: float, b: float, c: float, theta: np.ndarray) -> np.ndarray:
     return c + (1.0 - c) * _sigmoid_stable(a * (theta - b))
 
+def fisher_information(a: float, b: float, c: float, theta: float) -> float:
+    """Calculates the Fisher information for a single item at a given theta."""
+    p = p3pl(a, b, c, np.array([theta]))[0]
+    # Avoid division by zero or floating point instability
+    if p < 1e-6 or (1.0 - p) < 1e-6:
+        return 0.0
+    
+    q = 1.0 - p
+    info = (a**2 * (p - c)**2) / ((1 - c)**2 * p * q)
+    return float(info)
+
 def eap_theta(
     items: np.ndarray,
     administered: List[int],
