@@ -3,11 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.quiz import router as quiz_router
 
-app = FastAPI()
+application = FastAPI()
 
 origins = ["http://localhost:5173"]
 
-app.add_middleware(
+application.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -15,4 +15,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(quiz_router, prefix="/api", tags=["quiz"])
+application.include_router(quiz_router, prefix="/api", tags=["quiz"])

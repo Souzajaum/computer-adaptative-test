@@ -9,11 +9,11 @@ import {
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { useEffect, useState, useCallback } from "react";
-import { loginAnon, supabase } from "../../../supabaseClient";
+import { supabase } from "../../../supabaseClient";
 import { Button } from "../ui/button";
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://cat-quiz-app-2.onrender.com/api";
 
 const Quiz = () => {
   const [question, setQuestion] = useState(null);
@@ -25,36 +25,40 @@ const Quiz = () => {
   const [theta, setTheta] = useState(0.0);
 
   // 🔹 Busca próxima questão adaptativa
-  const fetchQuestion = useCallback(async () => {
-    if (!userId) return;
+  const fetchQuestion = useCallback(
+    async (uid = null) => {
+      const id = uid || userId;
+      if (!id) return;
 
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API_URL}/next-question`, {
-        params: { user_id: userId },
-      });
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_URL}/next-question`, {
+          params: { user_id: id },
+        });
 
-      // Se backend retornar teste concluído
-      if (res.data.finished) {
-        setIsFinished(true);
+        if (res.data.finished) {
+          setIsFinished(true);
+          setQuestion(null);
+          setTheta(res.data.theta || theta);
+        } else if (res.data.question) {
+          setQuestion(res.data.question);
+          setTheta(res.data.theta || theta);
+          setAnswer("");
+          setIsFinished(false);
+        } else {
+          setQuestion(null);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar questão:", err);
         setQuestion(null);
-        setTheta(res.data.theta || theta);
-      } else if (res.data.question) {
-        setQuestion(res.data.question);
-        setTheta(res.data.theta || theta);
-        setAnswer("");
-      } else {
-        setQuestion(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Erro ao buscar questão:", err);
-      setQuestion(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, theta]);
+    },
+    [userId, theta]
+  );
 
-  // 🔹 Inicialização e início do quiz
+  // 🔹 Inicialização do quiz
   useEffect(() => {
     const initAndStartQuiz = async () => {
       setLoading(true);
@@ -66,42 +70,25 @@ const Quiz = () => {
           const currentUserId = user.id;
           setUserId(currentUserId);
 
-          // 1. Inicia a sessão no backend
+          // Inicia quiz no backend
           await axios.post(
             `${API_URL}/start-quiz`,
             { user_id: currentUserId },
             { headers: { "Content-Type": "application/json" } }
           );
 
-          // 2. Busca a primeira questão
-          const res = await axios.get(`${API_URL}/next-question`, {
-            params: { user_id: currentUserId },
-          });
-
-          if (res.data.finished) {
-            setIsFinished(true);
-            setQuestion(null);
-            setTheta(res.data.theta || 0.0);
-          } else if (res.data.question) {
-            setQuestion(res.data.question);
-            setTheta(res.data.theta || 0.0);
-            setAnswer("");
-            setIsFinished(false); // Garante que não está finalizado
-          } else {
-            setQuestion(null);
-          }
+          // Busca primeira questão diretamente com ID
+          await fetchQuestion(currentUserId);
         }
-        // Se não houver usuário, não faz nada (ou pode redirecionar para o login)
       } catch (err) {
         console.error("Erro ao iniciar o quiz:", err);
-        setQuestion(null);
       } finally {
         setLoading(false);
       }
     };
 
     initAndStartQuiz();
-  }, []); // Executa apenas uma vez na montagem do componente
+  }, [fetchQuestion]);
 
   const handleSelect = (option) => setAnswer(option);
 
@@ -136,6 +123,26 @@ const Quiz = () => {
     }
   };
 
+  const restartQuiz = async () => {
+    if (!userId) return;
+
+    setIsFinished(false);
+    setCorrectAnswers(0);
+    setTheta(0.0);
+    setAnswer("");
+    setQuestion(null);
+
+    try {
+      setLoading(true);
+      await axios.post(`${API_URL}/start-quiz`, { user_id: userId });
+      await fetchQuestion(userId);
+    } catch (err) {
+      console.error("Erro ao reiniciar o quiz:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
       {loading && !question ? (
@@ -155,7 +162,7 @@ const Quiz = () => {
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => window.location.reload()}>Reiniciar</Button>
+            <Button onClick={restartQuiz}>Reiniciar</Button>
           </CardFooter>
         </Card>
       ) : question ? (
@@ -193,8 +200,8 @@ const Quiz = () => {
             </p>
           </CardContent>
           <CardFooter className="flex justify-end">
-            <Button onClick={handleNext}>
-              {answer ? "Próxima" : "Selecione uma opção"}
+            <Button onClick={handleNext} disabled={loading}>
+              {loading ? "Carregando..." : "Próxima"}
             </Button>
           </CardFooter>
         </Card>
