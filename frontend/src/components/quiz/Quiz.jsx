@@ -13,7 +13,7 @@ import { Button } from "../ui/button";
 import { supabase } from "../../../supabaseClient";
 import axios from "axios";
 
-const API_URL = "https://cat-quiz-app-2.onrender.com/api";
+const API_URL = "https://computer-adaptative-test.onrender.com/api";
 const TOTAL_QUESTIONS = 20;
 
 const Quiz = ({ onFinish }) => {
