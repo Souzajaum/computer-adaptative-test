@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import Header from "./components/header/Header";
+import Header from "./components/header/Header.jsx";
 import Quiz from "./components/quiz/Quiz";
-import HeaderModals from "./components/header/HeaderModals";
-import Benefits from "./components/benefits/Benefits";
-import Footer from "./components/footer/Footer";
+import HeaderModals from "./components/header/HeaderModals.jsx";
+import Benefits from "./components/benefits/Benefits.jsx";
+import Footer from "./components/footer/Footer.jsx";
 import ilustracao from "./assets/estudantepc.png";
 
 const App = () => {
