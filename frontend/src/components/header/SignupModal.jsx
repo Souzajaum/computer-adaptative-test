@@ -11,7 +11,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 
-const SignupModal = ({ open, onOpenChange }) => {
+const SignupModal = ({ open, onOpenChange, onSignupSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -22,9 +22,9 @@ const SignupModal = ({ open, onOpenChange }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const open = () => onOpenChange(true);
-    document.addEventListener("openSignup", open);
-    return () => document.removeEventListener("openSignup", open);
+    const openListener = () => onOpenChange(true);
+    document.addEventListener("openSignup", openListener);
+    return () => document.removeEventListener("openSignup", openListener);
   }, [onOpenChange]);
 
   const validateFields = () => {
@@ -48,28 +48,36 @@ const SignupModal = ({ open, onOpenChange }) => {
       return;
     }
 
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: "https://computer-adaptative-test-2.vercel.app",
-        data: { full_name: fullName, phone, city },
-      },
-    });
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          redirectTo: "https://computer-adaptative-test-3.vercel.app", // redireciona para a home
+          data: { full_name: fullName, phone, city },
+        },
+      });
 
-    if (signUpError) {
-      setError(signUpError.message);
+      if (signUpError) throw signUpError;
+
+      // Mostra mensagem e limpa campos
+      setSuccessMsg("Cadastro realizado! Verifique seu e-mail para confirmar.");
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      setPhone("");
+      setCity("");
+
+      // Opcional: chama callback para atualizar o estado do user na App.jsx
+      if (onSignupSuccess) onSignupSuccess(data?.user ?? null);
+
+      // Fecha modal automaticamente
+      onOpenChange(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSuccessMsg("Cadastro realizado! Verifique seu e-mail para confirmar.");
-    setEmail("");
-    setPassword("");
-    setFullName("");
-    setPhone("");
-    setCity("");
-    setLoading(false);
   };
 
   return (
