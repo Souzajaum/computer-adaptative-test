@@ -18,13 +18,14 @@ const TOTAL_QUESTIONS = 20;
 const Quiz = ({ user, onFinish }) => {
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [userId, setUserId] = useState(user?.id);
+  const [userId] = useState(user?.id);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [theta, setTheta] = useState(0.0);
 
+  // Busca a próxima questão
   const fetchQuestion = useCallback(async () => {
     if (!userId) return;
     try {
@@ -50,6 +51,7 @@ const Quiz = ({ user, onFinish }) => {
     }
   }, [userId, questionNumber]);
 
+  // Inicializa o quiz
   useEffect(() => {
     const initQuiz = async () => {
       if (!userId) return;
@@ -66,6 +68,7 @@ const Quiz = ({ user, onFinish }) => {
     initQuiz();
   }, [fetchQuestion, userId]);
 
+  // Submete a resposta
   const handleNext = async () => {
     if (!answer) return alert("Selecione uma alternativa antes de continuar.");
     try {
@@ -77,6 +80,10 @@ const Quiz = ({ user, onFinish }) => {
       });
 
       if (res.data.correct) setCorrectAnswers((prev) => prev + 1);
+
+      // ✅ Atualiza o θ imediatamente
+      if (res.data.theta !== undefined) setTheta(res.data.theta);
+
       setQuestionNumber((prev) => prev + 1);
       await fetchQuestion();
     } catch (err) {
@@ -86,6 +93,7 @@ const Quiz = ({ user, onFinish }) => {
     }
   };
 
+  // Finaliza quiz
   const finishQuiz = () => {
     setIsFinished(false);
     setCorrectAnswers(0);

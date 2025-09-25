@@ -4,13 +4,12 @@ import Header from "./components/header/Header.jsx";
 import Quiz from "./components/quiz/Quiz";
 import HeaderModals from "./components/header/HeaderModals.jsx";
 import Benefits from "./components/benefits/Benefits.jsx";
-import Footer from "./components/footer/footer.jsx";
+import Footer from "./components/footer/Footer.jsx";
 import ilustracao from "./assets/estudantepc.png";
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("home");
-
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
 
@@ -20,7 +19,6 @@ const App = () => {
       const { data } = await supabase.auth.getSession();
       const loggedUser = data.session?.user ?? null;
       setUser(loggedUser);
-
       if (loggedUser) setActiveTab("home"); // Home logado após email
     };
     getSession();
@@ -67,7 +65,7 @@ const App = () => {
       <div className="pt-[80px] px-6 flex-1 flex flex-col items-center w-full">
         {activeTab === "home" && (
           <>
-            <div className="bg-white w-full min-h-[40vh] md:min-h-[45vh] shadow-md rounded-lg p-8 flex flex-col md:flex-row items-center text-black">
+            <div className="bg-white w-full min-h-[40vh] md:min-h-[45vh] shadow-md rounded-lg p-8 flex flex-col md:flex-row items-center text-black transition-transform duration-300 hover:scale-[1.01]">
               <div className="w-full md:w-1/2 flex flex-col justify-center mb-6 md:mb-0 pr-0 md:pr-6">
                 <h1 className="text-3xl md:text-4xl font-bold pb-4">
                   Testes Adaptativos Informatizados
@@ -78,7 +76,7 @@ const App = () => {
                 </p>
                 <button
                   onClick={handleAccessSystem}
-                  className="mb-4 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
+                  className="mb-4 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-all duration-300 hover:scale-105"
                 >
                   Acessar Sistema
                 </button>
@@ -89,7 +87,7 @@ const App = () => {
                 <img
                   src={ilustracao}
                   alt="Estudante no computador"
-                  className="w-full max-w-[400px] h-auto rounded-lg"
+                  className="w-full max-w-[400px] h-auto rounded-lg transition-transform duration-300 hover:scale-105"
                 />
               </div>
             </div>
