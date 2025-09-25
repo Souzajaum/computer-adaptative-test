@@ -5,7 +5,7 @@ from app.routers.quiz import router as quiz_router
 
 application = FastAPI()
 
-origins = ["https://computer-adaptative-test-v2.vercel.app"]
+origins = ["https://computer-adaptative-test-01.vercel.app"]
 
 application.add_middleware(
     CORSMiddleware,

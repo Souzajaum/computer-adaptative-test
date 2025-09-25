@@ -56,7 +56,7 @@ const LoginForm = ({ onClose, onLoginSuccess }) => {
 };
 
 // Formulário de cadastro
-const SignupForm = ({ onClose }) => {
+const SignupForm = ({ onClose, onSignupSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -70,17 +70,18 @@ const SignupForm = ({ onClose }) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { full_name: fullName },
-        },
+        options: { data: { full_name: fullName } },
       });
       if (error) throw error;
 
-      alert("Cadastro realizado! Verifique seu email para confirmar a conta.");
+      alert("Cadastro realizado! Verifique seu email.");
       setEmail("");
       setPassword("");
       setFullName("");
       onClose();
+
+      // Volta para tela inicial
+      if (onSignupSuccess) onSignupSuccess();
     } catch (err) {
       alert("Erro no cadastro: " + err.message);
     } finally {
@@ -125,6 +126,7 @@ const HeaderModals = ({
   openSignupModal,
   setOpenSignupModal,
   onLoginSuccess,
+  onSignupSuccess,
 }) => {
   return (
     <>
@@ -146,7 +148,10 @@ const HeaderModals = ({
         onOpenChange={setOpenSignupModal}
         title="Cadastro"
       >
-        <SignupForm onClose={() => setOpenSignupModal(false)} />
+        <SignupForm
+          onClose={() => setOpenSignupModal(false)}
+          onSignupSuccess={onSignupSuccess}
+        />
       </Modal>
     </>
   );
