@@ -21,12 +21,6 @@ const SignupModal = ({ open, onOpenChange, onSignupSuccess }) => {
   const [successMsg, setSuccessMsg] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const openListener = () => onOpenChange(true);
-    document.addEventListener("openSignup", openListener);
-    return () => document.removeEventListener("openSignup", openListener);
-  }, [onOpenChange]);
-
   const validateFields = () => {
     if (!fullName) return "Nome completo é obrigatório.";
     if (!phone || phone.length < 8) return "Telefone inválido.";
@@ -53,14 +47,13 @@ const SignupModal = ({ open, onOpenChange, onSignupSuccess }) => {
         email,
         password,
         options: {
-          redirectTo: "https://computer-adaptative-test-3.vercel.app", // redireciona para a home
+          redirectTo: "https://computer-adaptative-test-3.vercel.app", // redireciona para home
           data: { full_name: fullName, phone, city },
         },
       });
 
       if (signUpError) throw signUpError;
 
-      // Mostra mensagem e limpa campos
       setSuccessMsg("Cadastro realizado! Verifique seu e-mail para confirmar.");
       setEmail("");
       setPassword("");
@@ -68,11 +61,11 @@ const SignupModal = ({ open, onOpenChange, onSignupSuccess }) => {
       setPhone("");
       setCity("");
 
-      // Opcional: chama callback para atualizar o estado do user na App.jsx
-      if (onSignupSuccess) onSignupSuccess(data?.user ?? null);
-
-      // Fecha modal automaticamente
+      // Fecha modal
       onOpenChange(false);
+
+      // Atualiza usuário logado automaticamente após confirmação do email
+      if (onSignupSuccess) onSignupSuccess(data?.user ?? null);
     } catch (err) {
       setError(err.message);
     } finally {

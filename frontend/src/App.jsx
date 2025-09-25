@@ -14,14 +14,20 @@ const App = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [signupModalOpen, setSignupModalOpen] = useState(false);
 
-  // Checa sessão
+  // Captura a sessão atual ao carregar página
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-    });
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      const loggedUser = data.session?.user ?? null;
+      setUser(loggedUser);
+
+      if (loggedUser) setActiveTab("home"); // Home logado após email
+    };
+    getSession();
 
     const listener = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) setActiveTab("home");
     });
 
     return () => listener.data.subscription.unsubscribe();
@@ -42,7 +48,7 @@ const App = () => {
   const handleSignupSuccess = (loggedUser) => {
     setUser(loggedUser);
     setSignupModalOpen(false);
-    setActiveTab("home"); // volta para home após cadastro
+    setActiveTab("home"); // Home logado após cadastro
   };
 
   return (
