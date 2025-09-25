@@ -52,7 +52,7 @@ const SignupModal = ({ open, onOpenChange }) => {
       email,
       password,
       options: {
-        emailRedirectTo: "http://localhost:5173/confirm",
+        emailRedirectTo: "https://computer-adaptative-test-v11.vercel.app",
         data: { full_name: fullName, phone, city },
       },
     });
