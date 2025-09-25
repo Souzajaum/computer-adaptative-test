@@ -6,7 +6,7 @@ from .data_access import record_answer
 from .irt import eap_theta, fisher_information
 
 user_sessions: Dict[str, dict] = {}
-MAX_QUESTIONS_PER_USER = 10
+MAX_QUESTIONS_PER_USER = 20
 
 def init_cat(user_id: str, questions_data: List[dict], alternatives_data: List[dict]):
     if user_id in user_sessions:

@@ -11,7 +11,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 
-const AuthModal = ({ open, onOpenChange }) => {
+const AuthModal = ({ open, onOpenChange, setOpenSignupModal }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -39,7 +39,7 @@ const AuthModal = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md w-full bg-white rounded-lg p-6">
         <DialogHeader>
           <DialogTitle>Entrar</DialogTitle>
           <DialogDescription>
@@ -74,6 +74,20 @@ const AuthModal = ({ open, onOpenChange }) => {
           <Button onClick={handleLogin} disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </Button>
+        </div>
+
+        {/* Link para cadastro */}
+        <div className="mt-4 text-center text-sm text-gray-500">
+          Não tem conta?{" "}
+          <button
+            className="text-blue-600 hover:underline"
+            onClick={() => {
+              onOpenChange(false); // fecha modal de login
+              setOpenSignupModal(true); // abre modal de cadastro
+            }}
+          >
+            Cadastre-se
+          </button>
         </div>
       </DialogContent>
     </Dialog>
