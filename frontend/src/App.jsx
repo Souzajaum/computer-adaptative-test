@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import Header from "./components/header/Header";
+import Header from "./components/header/Header.jsx";
 import Quiz from "./components/quiz/Quiz";
 import { Button } from "./components/ui/button";
-import HeaderModals from "./components/header/HeaderModals";
+import HeaderModals from "./components/header/HeaderModals.jsx";
 import ilustracao from "./assets/estudantepc.png";
-import Benefits from "./components/benefits/Benefits";
-import Footer from "./components/footer/Footer";
+import Benefits from "./components/benefits/Benefits.jsx";
+import Footer from "./components/footer/footer.jsx";
 
 const App = () => {
   const [user, setUser] = useState(null);
