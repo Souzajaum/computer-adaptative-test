@@ -4,7 +4,7 @@ import Header from "./components/header/Header.jsx";
 import Quiz from "./components/quiz/Quiz";
 import HeaderModals from "./components/header/HeaderModals.jsx";
 import Benefits from "./components/benefits/Benefits.jsx";
-import Footer from "./components/footer/Footer.jsx";
+import Footer from "./components/footer/footer.jsx";
 import ilustracao from "./assets/estudantepc.png";
 
 const App = () => {
