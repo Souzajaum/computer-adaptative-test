@@ -101,7 +101,11 @@ const App = () => {
         )}
       </div>
 
-      {activeTab !== "quiz" && <Footer />}
+      {activeTab !== "quiz" && (
+        <div className="w-full flex justify-center">
+          <Footer />
+        </div>
+      )}
 
       <HeaderModals
         openLoginModal={loginModalOpen}
