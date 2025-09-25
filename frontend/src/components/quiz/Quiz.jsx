@@ -1,116 +1,83 @@
+import { useEffect, useState, useCallback } from "react";
+import axios from "axios";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
 } from "../ui/card";
-import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { useEffect, useState, useCallback } from "react";
+import { Label } from "../ui/label";
 import { Button } from "../ui/button";
-import { supabase } from "../../../supabaseClient";
-import axios from "axios";
 
 const API_URL = "https://computer-adaptative-test.onrender.com/api";
 const TOTAL_QUESTIONS = 20;
 
-const Quiz = ({ onFinish }) => {
+const Quiz = ({ user, onFinish }) => {
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [userId, setUserId] = useState(null);
-  const [isFinished, setIsFinished] = useState(false);
+  const [userId, setUserId] = useState(user?.id);
+  const [questionNumber, setQuestionNumber] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [theta, setTheta] = useState(0.0);
-  const [questionNumber, setQuestionNumber] = useState(0);
 
-  // Função para buscar a próxima questão
-  const fetchQuestion = useCallback(
-    async (uid = null) => {
-      const id = uid || userId;
-      if (!id) return;
+  const fetchQuestion = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_URL}/next-question`, {
+        params: { user_id: userId },
+      });
 
-      try {
-        setLoading(true);
-        const res = await axios.get(`${API_URL}/next-question`, {
-          params: { user_id: id },
-        });
-
-        if (res.data.finished || questionNumber >= TOTAL_QUESTIONS) {
-          setIsFinished(true);
-          setQuestion(null);
-          if (res.data.theta !== undefined) setTheta(res.data.theta);
-        } else if (res.data.question) {
-          setQuestion(res.data.question);
-          setAnswer("");
-          setIsFinished(false);
-          if (res.data.theta !== undefined) setTheta(res.data.theta);
-        } else {
-          setQuestion(null);
-        }
-      } catch (err) {
-        console.error("Erro ao buscar questão:", err);
+      if (res.data.finished || questionNumber >= TOTAL_QUESTIONS) {
+        setIsFinished(true);
         setQuestion(null);
-      } finally {
-        setLoading(false);
+        setTheta(res.data.theta ?? 0);
+      } else if (res.data.question) {
+        setQuestion(res.data.question);
+        setAnswer("");
+      } else {
+        setQuestion(null);
       }
-    },
-    [userId, questionNumber]
-  );
+    } catch (err) {
+      console.error("Erro ao buscar questão:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, questionNumber]);
 
-  // Inicializa o quiz assim que o usuário estiver disponível
   useEffect(() => {
     const initQuiz = async () => {
+      if (!userId) return;
+      setLoading(true);
       try {
-        setLoading(true);
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
-
-        if (user) {
-          const currentUserId = user.id;
-          setUserId(currentUserId);
-
-          // Cria ou reinicia o quiz no backend
-          await axios.post(
-            `${API_URL}/start-quiz`,
-            { user_id: currentUserId },
-            { headers: { "Content-Type": "application/json" } }
-          );
-
-          // Busca a primeira questão, passando o userId direto
-          await fetchQuestion(currentUserId);
-        }
+        await axios.post(`${API_URL}/start-quiz`, { user_id: userId });
+        await fetchQuestion();
       } catch (err) {
         console.error("Erro ao iniciar quiz:", err);
       } finally {
         setLoading(false);
       }
     };
-
     initQuiz();
-  }, [fetchQuestion]);
-
-  const handleSelect = (option) => setAnswer(option);
+  }, [fetchQuestion, userId]);
 
   const handleNext = async () => {
     if (!answer) return alert("Selecione uma alternativa antes de continuar.");
-    if (!question) return;
-
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${API_URL}/submit-answer`,
-        { user_id: userId, question_id: question.id, answer },
-        { headers: { "Content-Type": "application/json" } }
-      );
+      const res = await axios.post(`${API_URL}/submit-answer`, {
+        user_id: userId,
+        question_id: question.id,
+        answer,
+      });
 
       if (res.data.correct) setCorrectAnswers((prev) => prev + 1);
-      if (res.data.theta !== undefined) setTheta(res.data.theta);
-
       setQuestionNumber((prev) => prev + 1);
-
       await fetchQuestion();
     } catch (err) {
       console.error("Erro ao enviar resposta:", err);
@@ -122,12 +89,11 @@ const Quiz = ({ onFinish }) => {
   const finishQuiz = () => {
     setIsFinished(false);
     setCorrectAnswers(0);
-    setTheta(0.0);
+    setTheta(0);
     setAnswer("");
     setQuestion(null);
     setQuestionNumber(0);
-
-    if (onFinish) onFinish();
+    onFinish && onFinish();
   };
 
   const progressPercent = Math.min(
@@ -190,7 +156,7 @@ const Quiz = ({ onFinish }) => {
               <RadioGroup
                 name={`question-${question.id}`}
                 value={answer}
-                onValueChange={handleSelect}
+                onValueChange={(val) => setAnswer(val)}
               >
                 {question.options &&
                   Object.entries(question.options).map(([letter, text]) => (
